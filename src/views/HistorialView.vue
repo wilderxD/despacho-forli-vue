@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ChevronDown,
@@ -118,11 +118,25 @@ async function eliminar(r: HistorialRecord) {
   }
 }
 
+function timeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (seconds < 60) return `hace ${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `hace ${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  return `hace ${hours}h`
+}
+
 onMounted(async () => {
   await Promise.all([
     resourcesStore.loadHistorial(),
     resourcesStore.loadHistorialCount(),
   ])
+  resourcesStore.startHistorialPolling()
+})
+
+onUnmounted(() => {
+  resourcesStore.stopHistorialPolling()
 })
 
 watch(
@@ -155,6 +169,12 @@ watch(
             <RefreshCw class="w-4 h-4" />
             Recargar
           </button>
+          <span
+            v-if="resourcesStore.historialLastChecked"
+            class="text-xs text-slate-400"
+          >
+            Actualizado {{ timeAgo(resourcesStore.historialLastChecked) }}
+          </span>
         </div>
       </div>
 

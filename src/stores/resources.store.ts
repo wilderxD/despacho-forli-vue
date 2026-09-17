@@ -5,6 +5,9 @@ import type { MetaData } from '../models/meta.model'
 import type { HistorialRecord, PedidosAll } from '../models/despacho.model'
 
 const PAGE_SIZE = 50
+const POLL_INTERVAL_MS = 30_000
+
+let historialPollingTimer: ReturnType<typeof setInterval> | null = null
 
 function todayISO(): string {
   const d = new Date()
@@ -34,6 +37,9 @@ export const useResourcesStore = defineStore('resources', () => {
 
   const historialCount = ref(0)
   const historialCountLoading = ref(false)
+
+  const lastKnownHistorialCount = ref(0)
+  const historialLastChecked = ref<Date | null>(null)
 
   const pageSize = PAGE_SIZE
 
@@ -82,9 +88,34 @@ export const useResourcesStore = defineStore('resources', () => {
   async function loadHistorialCount() {
     historialCountLoading.value = true
     try {
-      historialCount.value = await apiGet<number>('historial_count', { fecha: historialFecha.value })
+      const count = await apiGet<number>('historial_count', { fecha: historialFecha.value })
+      historialCount.value = count
+      lastKnownHistorialCount.value = count
+      historialLastChecked.value = new Date()
     } catch { /* ignore */ }
     finally { historialCountLoading.value = false }
+  }
+
+  async function startHistorialPolling() {
+    stopHistorialPolling()
+    historialPollingTimer = setInterval(async () => {
+      try {
+        const newCount = await apiGet<number>('historial_count', { fecha: historialFecha.value })
+        historialLastChecked.value = new Date()
+        if (newCount !== lastKnownHistorialCount.value) {
+          lastKnownHistorialCount.value = newCount
+          historialCount.value = newCount
+          await loadHistorial()
+        }
+      } catch { /* ignore polling errors */ }
+    }, POLL_INTERVAL_MS)
+  }
+
+  function stopHistorialPolling() {
+    if (historialPollingTimer) {
+      clearInterval(historialPollingTimer)
+      historialPollingTimer = null
+    }
   }
 
   async function loadAll() {
@@ -113,11 +144,15 @@ export const useResourcesStore = defineStore('resources', () => {
     historialError,
     historialCount,
     historialCountLoading,
+    lastKnownHistorialCount,
+    historialLastChecked,
     pageSize,
     loadMeta,
     loadPedidosAll,
     loadHistorial,
     loadHistorialCount,
+    startHistorialPolling,
+    stopHistorialPolling,
     loadAll,
     refresh,
   }
