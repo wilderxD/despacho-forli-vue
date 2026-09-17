@@ -151,8 +151,8 @@ watch(
 </script>
 
 <template>
-  <div class="h-full overflow-auto p-3">
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+  <div class="h-full min-h-0 flex flex-col p-3">
+    <div class="flex flex-col min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div class="p-6 border-b border-slate-200">
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <label class="text-sm font-medium text-slate-700">Fecha:</label>
@@ -189,7 +189,7 @@ watch(
       </div>
 
       <template v-else>
-        <div class="overflow-x-auto">
+        <div class="overflow-auto flex-1 min-h-0">
           <table class="w-full text-sm">
             <thead>
               <tr class="bg-slate-900 text-white">
