@@ -137,7 +137,7 @@ watch(
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="h-full overflow-auto p-3">
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-6 border-b border-slate-200">
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
