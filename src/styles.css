@@ -1,4 +1,4 @@
-@use 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
@@ -92,10 +92,10 @@ body {
 @layer components {
   .btn {
     @apply inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition select-none;
+  }
 
-    &:disabled {
-      @apply pointer-events-none opacity-50;
-    }
+  .btn:disabled {
+    @apply pointer-events-none opacity-50;
   }
 
   .btn:active:not(:disabled) {
@@ -296,10 +296,10 @@ body {
 
   .skeleton-line {
     @apply mb-2 h-3 w-full;
+  }
 
-    &:last-child {
-      width: 60%;
-    }
+  .skeleton-line:last-child {
+    width: 60%;
   }
 }
 
