@@ -13,10 +13,12 @@ import {
 } from 'lucide-vue-next'
 import { useResourcesStore } from '../stores/resources.store'
 import { useEstadoStore } from '../stores/estado.store'
-import { apiPost } from '../api/api.service'
+import { useProgress, apiPost } from '../api/api.service'
 import { reimprimir } from '../services/print.service'
 import { useModal } from '../services/modal.service'
 import { useToast } from '../composables/useToast'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
+import ProgressLine from '../components/ProgressLine.vue'
 import type { HistorialRecord } from '../models/despacho.model'
 import { ApiError } from '../api/api-error'
 
@@ -25,6 +27,8 @@ const resourcesStore = useResourcesStore()
 const estadoStore = useEstadoStore()
 const modal = useModal()
 const toast = useToast()
+
+const progress = useProgress('historial')
 
 const openDetails = ref(new Set<string>())
 
@@ -91,9 +95,10 @@ async function editar(r: HistorialRecord) {
   const confirmed = await modal.confirm('¿Desea editar este despacho?')
   if (!confirmed) return
   try {
-    await resourcesStore.loadToCart(r.id)
-    resourcesStore.choferSeleccionado = r.chofer
-    resourcesStore.placaSeleccionada = r.placa
+    estadoStore.chofer = r.chofer
+    estadoStore.placa = r.placa
+    estadoStore.setCartOrder(r.items)
+    estadoStore.persistCart()
     router.push('/despachar')
     toast.show('Despacho cargado para edición', 'success')
   } catch (e) {
@@ -107,7 +112,7 @@ async function eliminar(r: HistorialRecord) {
   try {
     await apiPost('eliminar', { id: r.id })
     estadoStore.removeDispatchPrepared(r.id)
-    await resourcesStore.refresh()
+    await resourcesStore.reloadHistorial()
     toast.show('Despacho eliminado', 'success')
   } catch (e) {
     if (e instanceof ApiError) {
@@ -140,14 +145,21 @@ onUnmounted(() => {
 })
 
 watch(
-  () => resourcesStore.historialFecha,
-  async () => {
+  [() => resourcesStore.historialFecha, () => resourcesStore.historialPage],
+  async ([newFecha], [oldFecha]) => {
+    if (newFecha !== oldFecha) {
+      resourcesStore.historialHasNew = false
+    }
     await Promise.all([
       resourcesStore.loadHistorial(),
       resourcesStore.loadHistorialCount(),
     ])
   }
 )
+
+function recargar() {
+  resourcesStore.reloadHistorial()
+}
 </script>
 
 <template>
@@ -163,12 +175,20 @@ watch(
             class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
           />
           <button
-            @click="resourcesStore.refresh()"
+            @click="recargar()"
             class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition"
           >
             <RefreshCw class="w-4 h-4" />
             Recargar
           </button>
+          <span
+            v-if="resourcesStore.historialHasNew"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600"
+            role="status"
+          >
+            <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+            Hay datos nuevos — pulsa Recargar
+          </span>
           <span
             v-if="resourcesStore.historialLastChecked"
             class="text-xs text-slate-400"
@@ -178,8 +198,11 @@ watch(
         </div>
       </div>
 
-      <div v-if="resourcesStore.historialLoading" class="p-6 space-y-3">
-        <div v-for="i in 5" :key="i" class="h-12 bg-slate-100 rounded-lg animate-pulse" />
+      <div v-if="resourcesStore.historialLoading" class="p-6">
+        <LoadingSpinner message="Cargando historial..." />
+        <div class="mt-1">
+          <ProgressLine :active="progress.active" :percent="progress.percent" />
+        </div>
       </div>
 
       <div v-else-if="resourcesStore.historialError" class="p-6">
@@ -224,10 +247,10 @@ watch(
                   <td class="px-4 py-3 text-slate-700">{{ r.chofer }}</td>
                   <td class="px-4 py-3 text-slate-700">{{ r.placa }}</td>
                   <td class="px-4 py-3 text-center font-semibold text-violet-600">
-                    {{ r.cargaEntregada }}
+                    {{ r.espumas }}
                   </td>
                   <td class="px-4 py-3 text-center font-semibold text-cyan-600">
-                    {{ r.cargaRecibida }}
+                    {{ r.resortes }}
                   </td>
                   <td class="px-4 py-3 text-center">
                     <template v-if="prepInfo(r)">

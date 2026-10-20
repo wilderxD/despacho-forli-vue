@@ -29,6 +29,7 @@ const grupos = computed(() => {
 })
 
 const loading = computed(() => resourcesStore.pedidosAllLoading)
+const pedidosError = computed(() => resourcesStore.pedidosAllError)
 const total = computed(() => resourcesStore.meta?.totalPedidos ?? 0)
 const prepared = computed(() => estadoStore.preparedCount)
 const cartPedidoCount = computed(() => estadoStore.cartPedidoCount)
@@ -36,6 +37,10 @@ const lastUpdated = computed(() => resourcesStore.lastUpdated)
 
 function setTexto(value: string) {
   filtrosStore.updatePrep({ texto: value })
+}
+
+function reintentarPedidos() {
+  resourcesStore.loadPedidosAll()
 }
 
 function irADespachar() {
@@ -101,7 +106,15 @@ function irADespachar() {
         </div>
 
         <div class="min-h-0 flex-1">
-          <UbigeoTree mode="prepare" :groups="grupos" :loading="loading" />
+          <div
+            v-if="pedidosError && !resourcesStore.pedidosAll"
+            class="flex h-full flex-col items-center justify-center gap-3 text-center"
+          >
+            <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">No se pudieron cargar los pedidos</p>
+            <p class="max-w-sm text-xs text-slate-400">{{ pedidosError }}</p>
+            <button type="button" class="btn btn-primary" @click="reintentarPedidos()">Reintentar</button>
+          </div>
+          <UbigeoTree v-else mode="prepare" :groups="grupos" :loading="loading" />
         </div>
       </div>
 

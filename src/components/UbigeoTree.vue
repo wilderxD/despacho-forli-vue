@@ -5,6 +5,9 @@ import { CheckCheck, ChevronDown, ChevronRight, Eye, EyeOff, House, Inbox, MapPi
 import { useEstadoStore } from '../stores/estado.store'
 import { useFiltrosStore } from '../stores/filtros.store'
 import { useModal } from '../services/modal.service'
+import { useProgress } from '../api/api.service'
+import LoadingSpinner from './LoadingSpinner.vue'
+import ProgressLine from './ProgressLine.vue'
 import type { UbigeoGroup, AgenciaGroup, ClienteGroup, PedidoItems } from '../utils/pedido-utils'
 
 const props = defineProps<{
@@ -26,6 +29,8 @@ const emptyText = computed(() =>
     ? 'No hay pedidos para esta combinación de filtros'
     : 'No hay pedidos preparados para despachar',
 )
+
+const progress = useProgress('pedidos')
 
 function isUbigeoOpen(ubigeo: string) { return expandedUbigeos.value.has(ubigeo) }
 function isAgenciaOpen(key: string) { return expandedAgencias.value.has(key) }
@@ -130,11 +135,11 @@ function showDir(pi: PedidoItems) {
 
 <template>
   <div class="flex h-full flex-col">
-    <div v-if="loading" class="p-2">
-      <div class="skeleton skeleton-block"></div>
-      <div class="skeleton skeleton-block" style="height: 36px"></div>
-      <div class="skeleton skeleton-block" style="height: 36px"></div>
-      <div class="skeleton skeleton-block" style="height: 36px"></div>
+    <div v-if="loading" class="p-4">
+      <LoadingSpinner message="Cargando pedidos..." />
+      <div class="mt-1">
+        <ProgressLine :active="progress.active" :percent="progress.percent" />
+      </div>
     </div>
 
     <div v-else-if="groups.length === 0" class="py-5 text-center text-sm text-slate-500" role="status">

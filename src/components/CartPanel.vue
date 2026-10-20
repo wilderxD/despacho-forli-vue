@@ -170,6 +170,7 @@ async function guardarYGenerar() {
       placa: placa.value,
       items: cart.value,
     })
+    resources.addHistorialRecord(res)
     const prep = estado.markDispatched(cart.value)
     estado.recordDispatchPrepared(res.id, prep)
     generar({ ...res, pedidosCount: cartPedidoCount.value })

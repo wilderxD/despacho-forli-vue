@@ -14,7 +14,22 @@ function esc(value: string): string {
     .replace(/'/g, '&#39;')
 }
 
-export function generar(data: GuardarResult): void {
+export async function generar(data: GuardarResult): Promise<void> {
+  try {
+    if (window.api?.printHtml) {
+      const html = buildHtml(data)
+      await window.api.printHtml(html)
+      return
+    }
+  } catch { /* fallback to window.open */ }
+
+  const w = window.open('', '_blank', 'width=1100,height=700')
+  if (!w) return
+  w.document.write(buildHtml(data))
+  w.document.close()
+}
+
+function buildHtml(data: GuardarResult): string {
   const items = data.items
   const pedidosUnicos = [...new Set(items.map((i) => i.pedido))]
   const totalPedidos = pedidosUnicos.length
@@ -209,10 +224,7 @@ export function generar(data: GuardarResult): void {
     '</body>' +
     '</html>'
 
-  const w = window.open('', '_blank', 'width=1100,height=700')
-  if (!w) return
-  w.document.write(html)
-  w.document.close()
+  return html
 }
 
 export function reimprimir(data: HistorialRecord): void {

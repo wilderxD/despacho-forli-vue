@@ -10,7 +10,7 @@ const K_DISPATCH_PREFIX = 'forli_dispatch_prep_'
 
 function readJson<T>(k: string): T | null {
   try {
-    const raw = sessionStorage.getItem(k)
+    const raw = localStorage.getItem(k)
     return raw ? JSON.parse(raw) as T : null
   } catch { return null }
 }
@@ -48,7 +48,7 @@ export const useEstadoStore = defineStore('estado', () => {
 
     const dispatch: Record<string, DispatchPrep> = {}
     try {
-      Object.keys(sessionStorage)
+      Object.keys(localStorage)
         .filter((k) => k.startsWith(K_DISPATCH_PREFIX))
         .forEach((k) => {
           const v = readJson<DispatchPrep>(k)
@@ -62,15 +62,15 @@ export const useEstadoStore = defineStore('estado', () => {
 
   // Persistence watchers
   watch(preparedItems, (v) => {
-    try { sessionStorage.setItem(K_PREPARED, JSON.stringify(v)) } catch { /* ignore */ }
+    try { localStorage.setItem(K_PREPARED, JSON.stringify(v)) } catch { /* ignore */ }
   }, { deep: true })
 
   watch(cart, (v) => {
-    try { sessionStorage.setItem(K_CART, JSON.stringify(v)) } catch { /* ignore */ }
+    try { localStorage.setItem(K_CART, JSON.stringify(v)) } catch { /* ignore */ }
   }, { deep: true })
 
   watch(processed, (v) => {
-    try { sessionStorage.setItem(K_PROCESSED, JSON.stringify(v)) } catch { /* ignore */ }
+    try { localStorage.setItem(K_PROCESSED, JSON.stringify(v)) } catch { /* ignore */ }
   }, { deep: true })
 
   function isPrepared(pedido: string): boolean {
@@ -119,12 +119,12 @@ export const useEstadoStore = defineStore('estado', () => {
     chofer.value = ''
     placa.value = ''
     try {
-      sessionStorage.removeItem(K_CART)
-      sessionStorage.removeItem(K_PROCESSED)
-      sessionStorage.removeItem(K_PREPARED)
-      Object.keys(sessionStorage)
+      localStorage.removeItem(K_CART)
+      localStorage.removeItem(K_PROCESSED)
+      localStorage.removeItem(K_PREPARED)
+      Object.keys(localStorage)
         .filter((k) => k.startsWith(K_DISPATCH_PREFIX))
-        .forEach((k) => sessionStorage.removeItem(k))
+        .forEach((k) => localStorage.removeItem(k))
     } catch { /* ignore */ }
     dispatchPrepared.value = {}
   }
@@ -153,14 +153,14 @@ export const useEstadoStore = defineStore('estado', () => {
 
   function recordDispatchPrepared(id: string, data: DispatchPrep) {
     dispatchPrepared.value = { ...dispatchPrepared.value, [id]: data }
-    try { sessionStorage.setItem(K_DISPATCH_PREFIX + id, JSON.stringify(data)) } catch { /* ignore */ }
+    try { localStorage.setItem(K_DISPATCH_PREFIX + id, JSON.stringify(data)) } catch { /* ignore */ }
   }
 
   function removeDispatchPrepared(id: string) {
     const next = { ...dispatchPrepared.value }
     delete next[id]
     dispatchPrepared.value = next
-    try { sessionStorage.removeItem(K_DISPATCH_PREFIX + id) } catch { /* ignore */ }
+    try { localStorage.removeItem(K_DISPATCH_PREFIX + id) } catch { /* ignore */ }
   }
 
   function loadToCart(items: Pedido[]) {
@@ -168,7 +168,7 @@ export const useEstadoStore = defineStore('estado', () => {
   }
 
   function persistCart() {
-    try { sessionStorage.setItem(K_CART, JSON.stringify(cart.value)) } catch { /* ignore */ }
+    try { localStorage.setItem(K_CART, JSON.stringify(cart.value)) } catch { /* ignore */ }
   }
 
   return {
